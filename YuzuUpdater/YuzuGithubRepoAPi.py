@@ -2,6 +2,7 @@ import requests
 import py7zr
 import YuzuUpdater.Contants as const
 import os
+import json
 
 class YuzuUpdater:
     def __init__(self, rootPath):
@@ -26,24 +27,56 @@ class YuzuUpdater:
         }
 
         return releaseData
+    
+    def createConfigFileJson(self):
+        if not os.path.exists(f'{self.rootPath}/{const.CONFIG_FILENAME}'):
+            self.writeOnConfigFile('{\n\t"version": "default"\n}')
+            return self.openConfigFile()
+        return self.openConfigFile()
+
+    def openConfigFile(self,mode="r+"):
+        return open(const.CONFIG_FILENAME, mode)
+    
+    def writeOnConfigFile(self,json):
+        file = self.openConfigFile("w+")
+        file.write(json)
+        file.close()
+
+    def readJsonConfigFile(self):
+        file = self.createConfigFileJson()
+        jsonDic = json.load(file)
+        file.close()
+        return jsonDic
+        
+    def checkCurrentVersion(self,configVersion):
+        if self.lastRelease["tag_name"] == configVersion :
+            return True
+        return False
 
     def downloadLastRelease(self):
 
         lastRelease = self.lastRelease
 
-        print(f'Baixando {lastRelease["name"]}')
+        config = self.readJsonConfigFile()
 
-        data = requests.get(lastRelease["download_url"],allow_redirects=True)
+        if self.checkCurrentVersion(config["version"]):
+            print(f'Você já está atualizado versão {config["version"]}')
+        else:
+            self.writeOnConfigFile(f'{{\n\t"version": "{lastRelease["tag_name"]}"\n}}')
 
-        file = open(f'{self.rootPath}/{lastRelease["name"]}',"wb"); 
+            print(f'Baixando {lastRelease["name"]}')
 
-        file.write(data.content)
+            data = requests.get(lastRelease["download_url"],allow_redirects=True)
 
-        file.close()
+            file = open(f'{self.rootPath}/{lastRelease["name"]}',"wb"); 
 
-        self.extractFile(filename=lastRelease["name"])
+            file.write(data.content)
 
-        os.unlink(f'{self.rootPath}/{lastRelease["name"]}')
+            file.close()
+
+            self.extractFile(filename=lastRelease["name"])
+
+            os.unlink(f'{self.rootPath}/{lastRelease["name"]}')
 
     def extractFile(self,filename):
 

@@ -11,7 +11,6 @@ def main():
         ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
     
     updater = YuzuUpdater(rootPath=ROOT_DIR)
-    print(ROOT_DIR)
     updater.downloadLastRelease()
 
 if __name__ == "__main__":
