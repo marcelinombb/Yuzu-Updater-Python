@@ -1,2 +1,3 @@
 yuzu-windows-msvc-early-access/
-__pycache__/
+YuzuUpdater/__pycache__/
+yuzuUpdate.json
