@@ -12,6 +12,7 @@ def main():
     
     updater = YuzuUpdater(rootPath=ROOT_DIR)
     updater.downloadLastRelease()
+    input("Pressione Enter pra sair...")
 
 if __name__ == "__main__":
     main()

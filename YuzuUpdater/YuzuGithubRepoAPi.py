@@ -1,16 +1,19 @@
 import requests
 import py7zr
+from requests.models import Response
 import YuzuUpdater.Contants as const
+from YuzuUpdater.ConfigHandler import ConfigHandler
 import os
-import json
+
 
 class YuzuUpdater:
-    def __init__(self, rootPath):
+    
+    def __init__(self, rootPath) ->None:
         self.headers = {"Accept": "application/vnd.github.v3+json"}
         self.rootPath = rootPath
         self.lastRelease = self.getLatestRelease()
 
-    def get(self,route):
+    def get(self,route) ->Response:
         response = requests.get(f'{const.GITHUB_REPO}/{route}',headers=self.headers)
         return response
 
@@ -27,42 +30,25 @@ class YuzuUpdater:
         }
 
         return releaseData
-    
-    def createConfigFileJson(self):
-        if not os.path.exists(f'{self.rootPath}/{const.CONFIG_FILENAME}'):
-            self.writeOnConfigFile('{\n\t"version": "default"\n}')
-            return self.openConfigFile()
-        return self.openConfigFile()
-
-    def openConfigFile(self,mode="r+"):
-        return open(const.CONFIG_FILENAME, mode)
-    
-    def writeOnConfigFile(self,json):
-        file = self.openConfigFile("w+")
-        file.write(json)
-        file.close()
-
-    def readJsonConfigFile(self):
-        file = self.createConfigFileJson()
-        jsonDic = json.load(file)
-        file.close()
-        return jsonDic
         
-    def checkCurrentVersion(self,configVersion):
+    def checkCurrentVersion(self,configVersion) ->bool:
         if self.lastRelease["tag_name"] == configVersion :
             return True
         return False
 
-    def downloadLastRelease(self):
+    def downloadLastRelease(self) ->None:
 
         lastRelease = self.lastRelease
 
-        config = self.readJsonConfigFile()
+        configObj = ConfigHandler(self.rootPath)
+
+        config = configObj.readJsonConfigFile()
 
         if self.checkCurrentVersion(config["version"]):
             print(f'Você já está atualizado versão {config["version"]}')
         else:
-            self.writeOnConfigFile(f'{{\n\t"version": "{lastRelease["tag_name"]}"\n}}')
+            configObj.writeOnConfigFile(
+                f'{{\n\t"version": "{lastRelease["tag_name"]}"\n}}')
 
             print(f'Baixando {lastRelease["name"]}')
 
@@ -78,7 +64,7 @@ class YuzuUpdater:
 
             os.unlink(f'{self.rootPath}/{lastRelease["name"]}')
 
-    def extractFile(self,filename):
+    def extractFile(self,filename) ->None:
 
         archive = py7zr.SevenZipFile(filename, mode='r')
         
